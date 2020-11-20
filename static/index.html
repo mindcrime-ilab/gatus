@@ -15,7 +15,7 @@
 			border-top-left-radius: 3px;
 			border-top-right-radius: 3px;
 		}
-		#results div.container:last-child {
+		#results div.container:last-child , #results .last {
 			border-bottom-left-radius: 3px;
 			border-bottom-right-radius: 3px;
 			border-bottom-width: 1px;
@@ -110,6 +110,17 @@
 				</div>
 				<div class="col-4 text-right">
 					<img src="logo.png" alt="Gatus" style="position: relative; min-width: 50px; max-width: 200px; width: 20%;"/>
+				</div>
+			</div>
+		</div>
+		<div id="search">
+			<div class="form-row mb-3">
+				<div class="col-md-11">
+					<label for="searchBox" class="sr-only">Search for service</label>
+					<input type="text" class="form-control" id="searchBox" placeholder="Enter service to search for and press enter">
+				</div>
+				<div class="col-md-1">
+					<button class="btn btn-light" type="button" onclick="resetSearchBox()">Reset</button>
 				</div>
 			</div>
 		</div>
@@ -225,6 +236,7 @@
 				if (JSON.stringify(serviceStatuses) !== JSON.stringify(data)) {
 					serviceStatuses = data;
 					buildTable();
+					applySearchTerm();
 				}
 			});
 		}
@@ -324,12 +336,48 @@
 			}, seconds * 1000)
 		}
 
+		function resetSearchBox() {
+			$('#searchBox').val('');
+			applySearchTerm();
+		}
+
+		function applySearchTerm() {
+			let searchTerm = $('#searchBox').val();
+
+			$('#results > div.container').each( function(_,e) {
+				let element = $(e)
+				// remove manually set 'last' class - it will be applied
+				// later to the last *visible* element
+				element.removeClass('last');
+				if( element.find(`span:icontains("${searchTerm}")`).length > 0 ) {
+					element.show();
+				}
+				else {
+					element.hide();
+				}
+			});
+			// CSS cannot select based on a future property on an element
+			// therefore use JQuery to select the last visible element to
+			// render the complete border by applying the last class
+			$('#results > div.container:visible:last').addClass("last");
+		}
+
+		$("#searchBox").change( function(){ applySearchTerm() });
+
 		$("#refresh-rate").change(function() {
 			clearInterval(refreshIntervalHandler);
 			setRefreshInterval($(this).val())
 		});
 		setRefreshInterval(30);
 		$("#refresh-rate").val(30);
+
+		// create a case-insensitive contains operator
+		// taken from
+		// https://stackoverflow.com/questions/8746882/jquery-contains-selector-uppercase-and-lower-case-issue
+		jQuery.expr[':'].icontains = function(a, i, m) {
+			return jQuery(a).text().toUpperCase()
+					.indexOf(m[3].toUpperCase()) >= 0;
+		};
 	</script>
 </body>
 </html>
